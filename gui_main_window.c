@@ -11,7 +11,7 @@ GtkWidget* create_main_window()
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(main_window), 
 			600, 450);
-	//gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
+	gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
 	// TODO: add a more safe callback function
 	g_signal_connect(G_OBJECT(main_window), "destroy",
