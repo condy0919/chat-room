@@ -11,13 +11,13 @@ GtkWidget* create_main_window();
 GtkWidget* create_login_dialog();
 
 //  the menu of main_app_window
-GtkWidget* create_menu_for_hbox();
+void create_menu_for_hbox(GtkWidget* hbox);
 
 //	init the left part of main_app_window about vbox
-GtkWidget* init_msg_part();
+void init_msg_part(GtkWidget* vbox_left);
 
 //	init the right part of main_app_window about scrolled_win
-GtkWidget* init_user_list_part();
+void init_user_list_part(GtkWidget* scrolled_window);
 
 
 inline static GtkWidget* init_command_buttons();

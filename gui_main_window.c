@@ -1,0 +1,134 @@
+#include "gui.h"
+#include <gdk/gdk.h>
+
+
+GtkWidget* create_main_window()
+{
+	GtkWidget* main_window;
+	GtkWidget* hbox;
+	GtkWidget* send_button;
+
+	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	// TODO: add a more safe function
+	g_signal_connect(G_OBJECT(main_window), "destroy",
+			G_CALLBACK(gtk_main_quit), NULL);
+	// TODO: add a more safe function
+	g_signal_connect(G_OBJECT(main_window), "delete_event",
+			G_CALLBACK(gtk_main_quit), main_window);
+	gtk_widget_show(main_window);
+
+	// create the whole menu
+	hbox = gtk_hbox_new(FALSE, 4);
+	gtk_container_add(GTK_CONTAINER(main_window), hbox);
+	create_menu_for_hbox(hbox);
+
+	gtk_widget_show_all(main_window);
+
+	return main_window;
+}
+
+
+
+void create_menu_for_hbox(GtkWidget* hbox)
+{
+	GtkWidget* vbox_left;
+	GtkWidget* scrolled_window;
+
+	vbox_left = gtk_vbox_new(FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox_left, 
+			TRUE, TRUE, 0);
+	init_msg_part(vbox_left);
+
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_box_pack_start(GTK_BOX(hbox), scrolled_window,
+			TRUE, TRUE, 0);
+	init_user_list_part(scrolled_window);
+
+}
+
+
+void init_user_list_part(GtkWidget* scrolled_window)
+{
+	GtkWidget* tree_view;
+
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
+	tree_view = gtk_tree_view_new();
+	gtk_container_add(GTK_CONTAINER(scrolled_window), tree_view);
+}
+
+
+void init_msg_part(GtkWidget* vbox_left)
+{
+	extern GString* user_name;
+
+	GtkWidget* msg_list_text;
+	GtkWidget* user_name_label;
+	GtkWidget* msg_line_text;
+	GtkWidget* h_button_box;
+
+	GtkWidget* scrolled_win_for_msg_list;
+	GtkWidget* scrolled_win_for_msg_line;
+
+	// init the text view
+	msg_list_text = gtk_text_view_new();
+	msg_line_text = gtk_text_view_new();
+
+	// the msg_list part
+	scrolled_win_for_msg_list = 
+		gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win_for_msg_list),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolled_win_for_msg_list)
+			, msg_list_text);
+	//gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win_msg_list_text),
+	//			msg_list_text);
+	gtk_box_pack_start(GTK_BOX(vbox_left), 
+			scrolled_win_for_msg_list, TRUE, TRUE, 0);
+
+	// the user_name label part
+	user_name_label = gtk_label_new(user_name->str);
+	gtk_box_pack_start(GTK_BOX(vbox_left),
+			user_name_label, TRUE, TRUE, 0);
+
+	// the msg_line inputing part
+	scrolled_win_for_msg_line = 
+		gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win_for_msg_line),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolled_win_for_msg_line)
+			, msg_line_text);
+	gtk_box_pack_start(GTK_BOX(vbox_left),
+			scrolled_win_for_msg_line, TRUE, TRUE, 0);
+	
+	// the hbox_button
+	h_button_box = init_command_buttons();
+	gtk_box_pack_start(GTK_BOX(vbox_left),
+			h_button_box, TRUE, TRUE, 0);
+}
+
+
+inline static GtkWidget* init_command_buttons()
+{
+	GtkWidget* hbox_ret;
+	GtkWidget* send_button;
+	GtkWidget* close_button;
+
+	hbox_ret = gtk_hbox_new(FALSE, 3);
+
+	send_button = gtk_button_new_with_label("send");
+	gtk_box_pack_start(GTK_BOX(hbox_ret), send_button, 
+			TRUE, TRUE, 0);
+	// TODO: add the signal function to connect with the bg
+	
+	close_button = gtk_button_new_with_label("close");
+	gtk_box_pack_start(GTK_BOX(hbox_ret), close_button,
+			TRUE, TRUE, 0);
+	// TODO: add the singal function to close all the port and file
+
+	return hbox_ret;
+}
+
+
+
