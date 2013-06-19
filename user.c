@@ -13,7 +13,7 @@ struct user_info_t* create_user_info()
 		perror("sender socket");
 		exit(1);
 	}
-	setsocketopt(user->sender_socket, SOL_SOCKET,
+	setsockopt(user->sender_socket, SOL_SOCKET,
 			SO_BROADCAST, &buf, sizeof(int));
 
 	user->receiver_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -21,7 +21,7 @@ struct user_info_t* create_user_info()
 		perror("receiver socket");
 		exit(1);
 	}
-	setsocketopt(user->receiver_socket, SOL_SOCKET,
+	setsockopt(user->receiver_socket, SOL_SOCKET,
 			SO_REUSEADDR, &buf, sizeof(int));
 
 	memset(&server_addr, 0, sizeof(server_addr));

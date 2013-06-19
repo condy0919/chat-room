@@ -20,18 +20,8 @@ void init_msg_part(GtkWidget* vbox_left);
 void init_user_list_part(GtkWidget* scrolled_window);
 
 
-inline static GtkWidget* init_command_buttons();
+GtkWidget* init_command_buttons(GtkWidget* widget);
 
-/*
- *	SIGNAL callback
- */
-
-//	the button clicked signal callback function
-void pre_login(GtkWidget* widget, gpointer object);
-
-/*
- *	EVENT callback
- */
 
 #endif
 

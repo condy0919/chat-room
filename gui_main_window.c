@@ -1,24 +1,27 @@
 #include "gui.h"
+#include "message.h"
+#include "signal_cb.h"
+#include <stdlib.h>
 #include <gdk/gdk.h>
 
 
 GtkWidget* create_main_window()
 {
+	extern GString* user_name;
+	extern struct user_info_t* user;
+
 	GtkWidget* main_window;
 	GtkWidget* hbox;
-	GtkWidget* send_button;
+	struct msg_pack_t msg;
 
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(main_window), 
 			600, 450);
 	gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
-
-	// TODO: add a more safe callback function
 	g_signal_connect(G_OBJECT(main_window), "destroy",
-			G_CALLBACK(gtk_main_quit), NULL);
-	// TODO: add a more safe callback function
+			G_CALLBACK(safe_quit), NULL);
 	g_signal_connect(G_OBJECT(main_window), "delete_event",
-			G_CALLBACK(gtk_main_quit), main_window);
+			G_CALLBACK(safe_quit), main_window);
 	gtk_widget_show(main_window);
 
 	// create the whole menu
@@ -108,14 +111,13 @@ void init_msg_part(GtkWidget* vbox_left)
 	gtk_box_pack_start(GTK_BOX(vbox_left),
 			scrolled_win_for_msg_line, FALSE, FALSE, 0);
 	
-	// the hbox_button
-	h_button_box = init_command_buttons();
-	gtk_box_pack_start(GTK_BOX(vbox_left),
-			h_button_box, TRUE, FALSE, 0);
+	// the hbox_button, and the msg_line_text for the signal callback function
+	h_button_box = init_command_buttons(msg_line_text);
+	gtk_box_pack_start(GTK_BOX(vbox_left), h_button_box, TRUE, FALSE, 0);
 }
 
 
-inline static GtkWidget* init_command_buttons()
+GtkWidget* init_command_buttons(GtkWidget* text_view)
 {
 	GtkWidget* hbox_ret;
 	GtkWidget* send_button;
@@ -126,15 +128,16 @@ inline static GtkWidget* init_command_buttons()
 	send_button = gtk_button_new_with_label("send");
 	gtk_box_pack_start(GTK_BOX(hbox_ret), send_button, 
 			TRUE, TRUE, 0);
-	// TODO: add the signal function to connect with the bg
+	g_signal_connect(G_OBJECT(send_button), "clicked",
+			G_CALLBACK(broadcast_message), text_view);
 	
 	close_button = gtk_button_new_with_label("close");
 	gtk_box_pack_start(GTK_BOX(hbox_ret), close_button,
 			TRUE, TRUE, 0);
-	// TODO: add the singal function to close all the port and file
+	g_signal_connect(G_OBJECT(close_button), "clicked",
+			G_CALLBACK(safe_quit), NULL);
 
 	return hbox_ret;
 }
-
 
 
