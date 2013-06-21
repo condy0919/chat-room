@@ -1,9 +1,9 @@
 #include "signal_cb.h"
 #include "gui.h"
-
+#include "recv_thread.h"
 
 // check, get the user_name, create the main_window,
-// and broadcast the LOGIN msg
+// and broadcast the LOGIN msg, start thread about recv_message
 void pre_login(GtkWidget* widget, gpointer object)
 {
 	extern GString* user_name;
@@ -39,11 +39,25 @@ void pre_login(GtkWidget* widget, gpointer object)
 	// create user and send broadcast msg
 	user = create_user_info();
 
+	// get the address
+	socklen_t socklen = sizeof(struct sockaddr_in);
+
+	if (getsockname(user->sender_socket, (struct sockaddr*)&msg.content.address,
+				&socklen) != 0) {
+		exit(1);
+	}
+	
+
+	start_recv_message_thread();
+
 	strcpy(msg.user_name, user_name->str);
 	msg.msg_type = LOGIN;
 	msg.flag = 0;
-	send_msg(user, &msg);
-	
+	send_msg(user, &msg);// user->sender 
+
+	// add the user self to user_list
+	//add_user(user_name->str);// has problem
+
 // DEBUG
 	print(&msg);
 
@@ -51,10 +65,11 @@ void pre_login(GtkWidget* widget, gpointer object)
 }
 
 
-void broadcast_message(GtkWidget* widget, GtkWidget* text_view)
+void send_msg_for_send_button(GtkWidget* widget, GtkWidget* text_view)
 {
 	extern struct user_info_t* user;
 	extern GString* user_name;
+	//extern GtkWidget* msg_list;
 
 	GtkTextBuffer* buffer;
 	GtkTextIter start, end;
@@ -65,7 +80,7 @@ void broadcast_message(GtkWidget* widget, GtkWidget* text_view)
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
 	char_count = gtk_text_buffer_get_char_count(GTK_TEXT_BUFFER(buffer));
 
-	if (char_count < 1)
+	if (char_count < 1 || char_count > MSG_MAX_LENGTH - 1)
 		return;
 
 	gtk_text_buffer_get_start_iter(buffer, &start);
@@ -73,16 +88,21 @@ void broadcast_message(GtkWidget* widget, GtkWidget* text_view)
 	text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
 
 	strcpy(msg.user_name, user_name->str);
-	strcpy(msg.msg, text);
+	strcpy(msg.content.msg, text);
 	msg.msg_type = CHAT;
 	msg.flag = 0;
 
 	send_msg(user, &msg);
+	//display_msg(msg, msg_list);
 // DEBUG
 	print(&msg);
 
+	// clear the input msg_line
 	buffer = gtk_text_buffer_new(NULL);
 	gtk_text_view_set_buffer(GTK_TEXT_VIEW(text_view), buffer);
+
+	// get the focus
+	gtk_widget_grab_focus(text_view);
 }
 
 
@@ -90,6 +110,7 @@ void safe_quit(GtkWidget* widget, gpointer data)
 {
 	extern struct user_info_t* user;
 	extern GString* user_name;
+	extern pthread_t id;
 
 	struct msg_pack_t msg;
 
@@ -103,6 +124,8 @@ void safe_quit(GtkWidget* widget, gpointer data)
 
 	if (user)
 		clear_user_info(user);
+
+	pthread_cancel(id);
 	
 	gtk_main_quit();
 }

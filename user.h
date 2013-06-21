@@ -12,7 +12,7 @@
 
 #include "message.h"
 
-#define SERV_PORT	29000
+#define SERV_PORT		8086
 
 struct user_info_t {
 	int sender_socket;

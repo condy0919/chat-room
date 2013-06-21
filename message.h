@@ -22,10 +22,10 @@ struct msg_pack_t {
 	 *							|
 	 *	sender:1,OK	<-------	| set it to 1
 	 */
-	//union {
-	//	struct sockaddr_in address;
-	char msg[MSG_MAX_LENGTH];
-	//} content;
+	union {
+		struct sockaddr_in address;
+		char msg[MSG_MAX_LENGTH];
+	} content;
 };
 
 inline static void print(struct msg_pack_t* msg)
@@ -36,7 +36,7 @@ inline static void print(struct msg_pack_t* msg)
 	else if (msg->msg_type == QUIT)
 		g_print("%s quited\n", msg->user_name);
 	else if (msg->msg_type == CHAT)
-		g_print("%s\n", msg->msg);
+		g_print("%s\n", msg->content.msg);
 	else
 		g_print("unknown type\n");
 }

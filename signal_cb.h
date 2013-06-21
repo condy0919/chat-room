@@ -13,7 +13,7 @@
 void pre_login(GtkWidget* widget, gpointer data);
 
 // send_button's callback function.
-void broadcast_message(GtkWidget* widget, GtkWidget* entry);
+void send_msg_for_send_button(GtkWidget* widget, GtkWidget* entry);
 
 // close_button's callback function. also can be used to quit program
 void safe_quit(GtkWidget* widget, gpointer data);
