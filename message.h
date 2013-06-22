@@ -13,6 +13,7 @@
 
 enum { LOGIN, QUIT, CHAT };
 
+
 struct msg_pack_t {
 	char user_name[USER_NAME_LENGTH];
 	unsigned char msg_type;// LOGIN, QUIT or CHAT

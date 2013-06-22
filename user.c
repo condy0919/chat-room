@@ -21,8 +21,26 @@ struct user_info_t* create_user_info()
 		perror("setsockopt for sender");
 		exit(1);
 	}
+	s = setsockopt(user->sender_socket, SOL_SOCKET,
+			SO_REUSEADDR, &on, sizeof(int));
+	if (s < 0) {
+		perror("setsockopt for sender");
+		exit(1);
+	}
 
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_addr.sin_port = htons(SERV_PORT);
+	if (bind(user->sender_socket, (struct sockaddr*)&server_addr,
+				sizeof(server_addr)) < 0) {
+		perror("bind");
+		exit(1);
+	}
+	// sender done
 
+	user->receiver_socket = user->sender_socket;
+	/*
 	user->receiver_socket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (user->receiver_socket < 0) {
 		perror("receiver socket");
@@ -45,6 +63,7 @@ struct user_info_t* create_user_info()
 		perror("bind");
 		exit(1);
 	}
+	*/
 
 	return user;
 }
@@ -87,7 +106,7 @@ int recv_msg(struct user_info_t* user, struct msg_pack_t* msg,
 
 void clear_user_info(struct user_info_t* user)
 {
-	close(user->receiver_socket);
+	//close(user->receiver_socket);
 	close(user->sender_socket);
 	free(user);
 }

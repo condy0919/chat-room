@@ -215,7 +215,7 @@ void display_msg(struct msg_pack_t msg, GtkWidget* text_view)
 	str = msg.user_name;
 	char* br1 = "[";
 	char* br2 = "]";
-	char* colon_tab = ":\n";
+	char* colon_tab = ":\t";
 
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
 	gtk_text_buffer_get_end_iter(buffer, &iter);
