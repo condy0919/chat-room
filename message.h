@@ -23,7 +23,7 @@ struct msg_pack_t {
 	 *							|
 	 *	sender:1,OK	<-------	| set it to 1
 	 */
-	union {
+	struct {
 		struct sockaddr_in address;
 		char msg[MSG_MAX_LENGTH];
 	} content;
