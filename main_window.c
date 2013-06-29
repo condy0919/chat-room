@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <arpa/inet.h>
 
+
 #include "user.h"
 #include "main_window.h"
 
@@ -14,6 +15,7 @@ gboolean safe_quit(GtkWidget* widget, gpointer data)
 	extern struct user_info_t* user;
 	extern GString* user_name;
 	extern pthread_t id;
+	extern pthread_t spyon_id;
 	extern main_app_window_t main_app_window;
 
 	struct msg_pack_t msg;
@@ -27,9 +29,11 @@ gboolean safe_quit(GtkWidget* widget, gpointer data)
 	print(&msg);
 
 	pthread_cancel(id);
+	pthread_cancel(spyon_id);
 
 	// save the history 
-	write_history_to_file(main_app_window.history_list);
+	if (main_app_window.history_list->list_size > 0)
+		write_history_to_file(main_app_window.history_list);
 
 	if (user)
 		clear_user_info(user);
@@ -95,6 +99,7 @@ void create_main_app_window(main_app_window_t* main_app_window)
 	
 	// for the face window, it should be hiding
 	gtk_widget_hide(main_app_window->face_window);
+	gtk_widget_hide(main_app_window->file_window);
 }
 
 
@@ -256,7 +261,7 @@ void create_face_window(main_app_window_t* main_app_window)
 	gtk_window_set_position(GTK_WINDOW(main_app_window->face_window), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width(GTK_CONTAINER(main_app_window->face_window), 4);
 
-	g_signal_connect(G_OBJECT(main_app_window->face_window), "destroy", (void (*)(void))gtk_widget_destroy, NULL);
+	g_signal_connect(G_OBJECT(main_app_window->face_window), "delete_event", G_CALLBACK(hide_face_window), NULL);
 	table = gtk_table_new(5, 6, TRUE);
 	gtk_container_set_border_width(GTK_CONTAINER(table), 4);
 	gtk_table_set_row_spacings(GTK_TABLE(table), 2);
@@ -270,6 +275,12 @@ void create_face_window(main_app_window_t* main_app_window)
 			//g_free(filename);
 		}
 	gtk_widget_show_all(main_app_window->face_window);
+}
+
+
+void hide_face_window(GtkWidget* widget, GdkEvent* event, gpointer data)
+{
+	gtk_widget_hide(widget);
 }
 
 
@@ -311,6 +322,7 @@ void add_code_to_msg_line(GtkWidget* widget, GdkEvent* event, gchar* filename)
 	gtk_text_view_set_buffer(GTK_TEXT_VIEW(msg_line), GTK_TEXT_BUFFER(buffer));
 }
 
+
 void init_user_list_tree_view(main_app_window_t* main_app_window)
 {
 	GtkTreeViewColumn* column;
@@ -318,10 +330,27 @@ void init_user_list_tree_view(main_app_window_t* main_app_window)
 
 	main_app_window->user_list_store = gtk_list_store_new(NBR_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
 
-
+	// create the tree view of user list
 	main_app_window->user_list_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(main_app_window->user_list_store));
 	gtk_widget_set_size_request(main_app_window->user_list_tree_view, 150, 450);
 	gtk_container_add(GTK_CONTAINER(main_app_window->scrolled_window), main_app_window->user_list_tree_view);
+	g_signal_connect(main_app_window->user_list_tree_view, "row-activated", G_CALLBACK(show_user_share), main_app_window);
+
+	// create file window
+	main_app_window->file_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	main_app_window->file_list_store = gtk_list_store_new(FILE_NBR_COLUMNS, G_TYPE_STRING, G_TYPE_INT);
+	GtkWidget* scrolled_window_for_file_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window_for_file_window), 
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(main_app_window->file_window), scrolled_window_for_file_window);
+	g_signal_connect(G_OBJECT(main_app_window->file_window), "delete_event", G_CALLBACK(hide_file_window), NULL); 
+			
+
+	// create the file-list tree view
+	main_app_window->file_list_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(main_app_window->file_list_store));
+	gtk_container_add(GTK_CONTAINER(scrolled_window_for_file_window), main_app_window->file_list_tree_view);
+	g_signal_connect(G_OBJECT(main_app_window->file_list_tree_view), "row-activated", G_CALLBACK(download_file), main_app_window);
+
 
 	// add name column
 	renderer = gtk_cell_renderer_text_new();
@@ -334,6 +363,93 @@ void init_user_list_tree_view(main_app_window_t* main_app_window)
 	// the column of IP
 	column = gtk_tree_view_column_new_with_attributes("IP", renderer, "text", IP_COLUMN, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(main_app_window->user_list_tree_view), column);
+}
+
+// event function for hiding the file_window
+void hide_file_window(GtkWidget* widget, GdkEvent* event, gpointer data)
+{
+	gtk_widget_hide(widget);
+}
+
+void download_file(GtkWidget* widget, main_app_window_t* main_app_window)
+{
+
+}
+
+void show_user_share(GtkWidget* treeview, GtkTreePath* path, GtkTreeViewColumn* col, gpointer data)
+{
+	extern struct user_info_t* user;
+
+	GtkTreeModel* model;
+	GtkTreeIter iter;
+	main_app_window_t* main_app_window = data;
+	int s;
+
+// DEBUG
+	g_print("a row has been double-clicked\n");
+	gtk_widget_show(main_app_window->file_window);
+
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
+	if (gtk_tree_model_get_iter(model, &iter, path)) {
+		gchar* name;
+		gchar* ip;
+		gtk_tree_model_get(model, &iter, USER_NAME_COLUMN, &name, -1);
+		gtk_tree_model_get(model, &iter, IP_COLUMN, &ip, -1);
+
+		// connect downloader with sharer
+		struct sockaddr_in server_addr;
+		memset(&server_addr, 0, sizeof(server_addr));
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_port = htons(SERV_PORT);
+		server_addr.sin_addr.s_addr = inet_addr(ip);
+		s = connect(user->file_downloader, (struct sockaddr*)&server_addr, sizeof(server_addr));
+		if (s < 0)
+			perror("connect");
+
+		download_file_info_list(user->file_downloader, main_app_window);
+
+		g_free(name);
+		g_free(ip);
+	}
+}
+
+// download the file info list, and show these in the file list window
+void download_file_info_list(int file_downloader, main_app_window_t* main_app_window)
+{
+	// send the ask for sending file info list
+	int choice = 0;
+	int s;
+	struct file_info_t file_info;
+
+	// for showing
+	GtkTreeIter iter;
+	GtkListStore* store = main_app_window->file_list_store;
+
+
+	// ask for file list
+	choice = SEND_FILE_LIST;
+	s = send(file_downloader, &choice, sizeof(choice), 0);
+	if (s < 0)
+		perror("download file info list send");
+
+	// receive the file info (file name, size)
+	while (1) {
+		s = recv(file_downloader, &file_info, sizeof(file_info), 0);
+		if (s < 0)
+			perror("download file info list recv");
+
+		if (file_info.file_size == -1)
+			break;
+		// show file info in the file window's treeview
+		char* file_name;
+		int file_size;
+
+		file_name = file_info.file_name;
+		file_size = file_info.file_size;
+
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, FILE_NAME_COLUMN, file_name, FILE_SIZE_COLUMN, file_size, -1);// NOTE
+	}
 }
 
 

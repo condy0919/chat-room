@@ -60,6 +60,7 @@ void* recv_message(void* arg)
 			// same IP 
 			if (has_same_ip(msg))
 				break;
+			//msg.content.address = dst_address;// perhaps it is correct
 			add_user(msg, (main_app_window_t*)arg);
 
 			// flag means the msg has been received by another user

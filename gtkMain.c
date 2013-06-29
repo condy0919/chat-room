@@ -12,7 +12,8 @@ main_app_window_t main_app_window;
 struct user_info_t* user;
 
 // the thread info
-pthread_t id;
+pthread_t id;// recv_message thread
+pthread_t spyon_id;
 
 
 int main(int argc, char* argv[])

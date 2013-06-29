@@ -18,7 +18,7 @@ login_window.o: login_window.c message.h user.h main_window.h login_window.h
 recv_thread.o: recv_thread.c main_window.h recv_thread.h
 	$(CC) recv_thread.c -c -g $(CFLAGS)
 
-user.o: user.c user.h
+user.o: user.c user.h file_pack.h
 	$(CC) user.c -c -g $(CFLAGS)
 
 common_list.o: common_list.c common_list.h
